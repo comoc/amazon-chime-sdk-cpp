@@ -31,6 +31,7 @@ struct MeetingControllerDependencies {
   std::unique_ptr<LogSink> log_sink;
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peer_connection_factory;
   SessionDescriptionObserver* session_description_observer = nullptr;
+  std::unique_ptr<rtc::Thread> worker_thread; // Komori added
 };
 
 #endif  // CONTROLLER_DEPENDENCIES_H_

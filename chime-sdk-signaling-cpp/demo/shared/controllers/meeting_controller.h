@@ -76,6 +76,8 @@ class MeetingController {
 
   rtc::scoped_refptr<webrtc::RtpTransceiverInterface> local_video_transceiver_;
   SessionDescriptionObserver* session_description_observer_ = nullptr;
+
+  std::unique_ptr<rtc::Thread> worker_thread_; // Komori added
 };
 
 #endif  // MEETING_CONTROLLER_H_

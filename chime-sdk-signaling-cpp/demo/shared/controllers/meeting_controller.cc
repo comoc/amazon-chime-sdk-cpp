@@ -67,14 +67,31 @@ std::unique_ptr<MeetingController> MeetingController::Create(MeetingControllerCo
   peer_connection_factory_dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
   webrtc::EnableMedia(peer_connection_factory_dependencies);
 
+#if 1 // Komori added
+#if defined(__linux__)
+  // ref: https://github.com/shiguredo/momo/blob/78673c83c7eff0df18d67b469db7b61cbb6bda17/src/rtc/rtc_manager.cpp
+  dependencies.worker_thread = rtc::Thread::Create();
+  dependencies.worker_thread->Start();
+  //webrtc::AudioDeviceModule::AudioLayer audio_layer = webrtc::AudioDeviceModule::kLinuxPulseAudio;
+  webrtc::AudioDeviceModule::AudioLayer audio_layer = webrtc::AudioDeviceModule::kPlatformDefaultAudio;
+  peer_connection_factory_dependencies.worker_thread = dependencies.worker_thread.get();
+
+  peer_connection_factory_dependencies.adm =
+	  peer_connection_factory_dependencies.worker_thread->BlockingCall(
+		  [&]() -> rtc::scoped_refptr<webrtc::AudioDeviceModule> {
+		      return webrtc::AudioDeviceModule::Create(
+				      audio_layer,
+				      peer_connection_factory_dependencies.task_queue_factory.get());
+		  });
+#endif // __linux__
+#endif // 1
+
   peer_connection_factory_dependencies.video_encoder_factory = webrtc::CreateBuiltinVideoEncoderFactory();
   peer_connection_factory_dependencies.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
   peer_connection_factory_dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
   peer_connection_factory_dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
-#if 1
-  peer_connection_factory_dependencies.adm = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, peer_connection_factory_dependencies.task_queue_factory.get());
-  // peer_connection_factory_dependencies.adm = webrtc::AudioDeviceModule::CreateForTest(webrtc::AudioDeviceModule::kPlatformDefaultAudio, peer_connection_factory_dependencies.task_queue_factory.get());
-#else
+
+#if 0 // Komori commented out
   peer_connection_factory_dependencies.adm = webrtc::TestAudioDeviceModule::Create(peer_connection_factory_dependencies.task_queue_factory.get(),
       webrtc::TestAudioDeviceModule::CreatePulsedNoiseCapturer(/* amplitude */ 32000, /* freq */ 48000),
       webrtc::TestAudioDeviceModule::CreateDiscardRenderer(/* freq */ 48000));
@@ -91,6 +108,7 @@ MeetingController::MeetingController(MeetingControllerConfiguration configuratio
                                      MeetingControllerDependencies dependencies) {
   signaling_client_ = std::move(dependencies.signaling_client);
   signaling_thread_ = std::move(dependencies.signaling_thread);
+  worker_thread_ = std::move(dependencies.worker_thread);
   log_sink_ = std::move(dependencies.log_sink);
   peer_connection_factory_ = std::move(dependencies.peer_connection_factory);
   session_description_observer_ = dependencies.session_description_observer;
@@ -108,6 +126,8 @@ MeetingController::~MeetingController() {
   local_video_transceiver_ = nullptr;
   peer_connection_factory_ = nullptr;
   session_description_observer_ = nullptr;
+
+  worker_thread_->Stop(); // Komori
 }
 
 void MeetingController::Start() {
