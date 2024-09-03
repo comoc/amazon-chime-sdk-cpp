@@ -84,7 +84,7 @@ cd $CHIME_SDK_DEMO_DIRECTORY/webrtc-build/src
 # * Set `rtc_use_h264=false` to avoid building codecs
 #   that may have problematic licenses.
 # * Set 'rtc_enable_protobuf=false' to avoid downstream duplicate symbol issues.
-# * Set 'rtc_include_pulse_audio=false' to maximize portability.
+# * ~~Set 'rtc_include_pulse_audio=false' to maximize portability.~~Set 'rtc_include_pulse_audio=true' to use PulseAudio.
 # * Set 'rtc_include_tests=false' avoids building some files with STL incompatibilities when 'use_custom_libcxx=false' is set.
 #
 # Note you may want to set 'is_debug=false' for production builds
@@ -93,7 +93,7 @@ gn_args='target_os="linux"
         rtc_include_tests=false 
         use_custom_libcxx=false
         rtc_enable_protobuf=false
-        rtc_include_pulse_audio=false'
+        rtc_include_pulse_audio=true'
 gn gen out/Default --args="${gn_args}"
 ninja -C out/Default
 # Build additional module for test audio devices
