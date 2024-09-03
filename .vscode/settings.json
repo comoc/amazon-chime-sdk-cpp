@@ -3,5 +3,6 @@
         "*.Makefile": "makefile",
         "algorithm": "cpp",
         "optional": "cpp"
-    }
+    },
+    "ros.distro": "humble"
 }

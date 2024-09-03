@@ -15,6 +15,10 @@
 #include "meeting_controller_configuration.h"
 #include "meeting_controller_dependencies.h"
 
+#include "webrtc/api/audio/audio_device.h"
+// #include "webrtc/modules/audio_device/audio_device_impl.h"
+// #include "webrtc/modules/audio_device/include/audio_device.h"
+
 #include "webrtc/api/create_peerconnection_factory.h"
 #include "webrtc/api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "webrtc/api/audio_codecs/builtin_audio_encoder_factory.h"
@@ -67,9 +71,14 @@ std::unique_ptr<MeetingController> MeetingController::Create(MeetingControllerCo
   peer_connection_factory_dependencies.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
   peer_connection_factory_dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
   peer_connection_factory_dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+#if 1
+  peer_connection_factory_dependencies.adm = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, peer_connection_factory_dependencies.task_queue_factory.get());
+  // peer_connection_factory_dependencies.adm = webrtc::AudioDeviceModule::CreateForTest(webrtc::AudioDeviceModule::kPlatformDefaultAudio, peer_connection_factory_dependencies.task_queue_factory.get());
+#else
   peer_connection_factory_dependencies.adm = webrtc::TestAudioDeviceModule::Create(peer_connection_factory_dependencies.task_queue_factory.get(),
       webrtc::TestAudioDeviceModule::CreatePulsedNoiseCapturer(/* amplitude */ 32000, /* freq */ 48000),
       webrtc::TestAudioDeviceModule::CreateDiscardRenderer(/* freq */ 48000));
+#endif
 
   // To stay in the meeting, Chime's audio server requires a consistent stream of audio packets at all times.
   //   For more ways to send dummy audio see webrtc::TestAudioDeviceModule (omitted for brevity).
